@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遥感图像分类系统 - Indian Pines数据集</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #1abc9c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: white;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 2px solid var(--light-color);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-outline-primary {
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .algorithm-option {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .algorithm-option:hover {
+            border-color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .algorithm-option.active {
+            border-color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .algorithm-icon {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .result-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid #dee2e6;
+        }
+        
+        .report-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+        }
+        
+        .parameter-slider {
+            width: 100%;
+        }
+        
+        .slider-value {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .dataset-info-box {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary-color);
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            display: none;
+            font-size: 1.5rem;
+        }
+        
+        .models-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .model-item {
+            border-left: 3px solid var(--accent-color);
+            margin-bottom: 0.5rem;
+            padding: 0.75rem;
+            background-color: white;
+            border-radius: 5px;
+        }
+        
+        .tab-content {
+            padding: 1rem 0;
+        }
+        
+        .tab-pane {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        footer {
+            margin-top: 2rem;
+            padding: 1.5rem 0;
+            background-color: var(--dark-color);
+            color: white;
+            text-align: center;
+        }
+        
+        .dataset-stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .stat-item {
+            background-color: white;
+            padding: 0.75rem;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1;
+            margin: 0.25rem;
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        
+        .info-tooltip {
+            cursor: help;
+            color: var(--secondary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .algorithm-option {
+                margin-bottom: 0.5rem;
+            }
+            
+            .stat-item {
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark header-gradient">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-satellite me-2"></i>遥感图像分类系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home me-1"></i>首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about"><i class="fas fa-info-circle me-1"></i>关于</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact"><i class="fas fa-envelope me-1"></i>联系</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 左侧：控制面板 -->
+            <div class="col-lg-4">
+                <!-- 数据集加载卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-database me-2"></i>数据集加载</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">加载Indian Pines高光谱遥感数据集，包含145×145像素、200个波段和16个土地覆盖类别。</p>
+                        
+                        <button id="loadDatasetBtn" class="btn btn-success w-100 mb-3">
+                            <i class="fas fa-spinner fa-spin loading-spinner" id="datasetSpinner"></i>
+                            <span id="datasetBtnText"><i class="fas fa-cloud-download-alt me-2"></i>加载数据集</span>
+                        </button>
+                        
+                        <div id="datasetInfo" class="dataset-info-box" style="display: none;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <div>
+                                    <strong id="datasetMessage">数据集加载成功！</strong>
+                                    <div id="datasetDetails" class="small mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dataset-stats" id="datasetStats" style="display: none;">
+                            <div class="stat-item">
+                                <div class="stat-value" id="statPixels">21,025</div>
+                                <div class="stat-label">像素</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="statBands">200</div>
+                                <div class="stat-label">波段</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="statClasses">16</div>
+                                <div class="stat-label">类别</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分类设置卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>分类设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 分类类型选择 -->
+                        <div class="mb-4">
+                            <h6><i class="fas fa-project-diagram me-2"></i>分类类型</h6>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="classification_type" id="unsupervised" value="unsupervised" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="unsupervised">
+                                    <i class="fas fa-clone me-1"></i>非监督分类
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="classification_type" id="supervised" value="supervised" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="supervised">
+                                    <i class="fas fa-graduation-cap me-1"></i>监督分类
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 算法选择 -->
+                        <div id="algorithmSection">
+                            <!-- 非监督分类算法 -->
+                            <div id="unsupervisedAlgorithms">
+                                <h6><i class="fas fa-cogs me-2"></i>非监督分类算法</h6>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="algorithm-option p-3 active" data-algorithm="kmeans">
+                                            <div class="algorithm-icon">
+                                                <i class="fas fa-chart-pie"></i>
+                                            </div>
+                                            <div class="fw-bold">K-Means</div>
+                                            <small class="text-muted">基于距离的聚类</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="algorithm-option p-3" data-algorithm="isodata">
+                                            <div class="algorithm-icon">
+                                                <i class="fas fa-project-diagram"></i>
+                                            </div>
+                                            <div class="fw-bold">ISODATA</div>
+                                            <small class="text-muted">迭代自组织聚类</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="nClusters" class="form-label">
+                                        聚类数量: <span class="slider-value" id="nClustersValue">10</span>
+                                        <i class="fas fa-info-circle info-tooltip" title="确定要将数据分成多少个簇"></i>
+                                    </label>
+                                    <input type="range" class="form-range parameter-slider" id="nClusters" min="2" max="20" value="10">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>2</span>
+                                        <span>10</span>
+                                        <span>20</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="isodataParams" style="display: none; margin-top: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #1abc9c;">
+                                    <h6 style="color: #1abc9c;"><i class="fas fa-sliders-h me-2"></i>ISODATA高级参数</h6>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="minSamples" class="form-label">
+                                                最小样本数: <span class="slider-value" id="minSamplesValue">10</span>
+                                                <i class="fas fa-info-circle info-tooltip ms-1" title="删除样本数小于此值的簇"></i>
+                                            </label>
+                                            <input type="range" class="form-range parameter-slider" id="minSamples" min="5" max="50" value="10">
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span>5</span>
+                                                <span>10</span>
+                                                <span>50</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label for="mergeThreshold" class="form-label">
+                                                合并阈值: <span class="slider-value" id="mergeThresholdValue">2.0</span>
+                                                <i class="fas fa-info-circle info-tooltip ms-1" title="簇中心距离小于此值则合并"></i>
+                                            </label>
+                                            <input type="range" class="form-range parameter-slider" id="mergeThreshold" min="0.5" max="5.0" step="0.1" value="2.0">
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span>0.5</span>
+                                                <span>2.0</span>
+                                                <span>5.0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <label for="splitThreshold" class="form-label">
+                                                分裂阈值: <span class="slider-value" id="splitThresholdValue">1.5</span>
+                                                <i class="fas fa-info-circle info-tooltip ms-1" title="簇内标准差大于此值则分裂"></i>
+                                            </label>
+                                            <input type="range" class="form-range parameter-slider" id="splitThreshold" min="0.5" max="3.0" step="0.1" value="1.5">
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span>0.5</span>
+                                                <span>1.5</span>
+                                                <span>3.0</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="alert alert-light small mb-0">
+                                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                                <strong>ISODATA特点:</strong><br>
+                                                • 动态调整簇数量<br>
+                                                • 自动合并相近簇<br>
+                                                • 自动分裂大簇<br>
+                                                • 删除样本数太少的簇
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                 
+                            </div>
+
+                            <!-- 监督分类算法 -->
+                            <div id="supervisedAlgorithms" style="display: none;">
+                                <h6><i class="fas fa-cogs me-2"></i>监督分类算法</h6>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="algorithm-option p-3 active" data-algorithm="svm">
+                                            <div class="algorithm-icon">
+                                                <i class="fas fa-shapes"></i>
+                                            </div>
+                                            <div class="fw-bold">SVM</div>
+                                            <small class="text-muted">支持向量机</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="algorithm-option p-3" data-algorithm="rf">
+                                            <div class="algorithm-icon">
+                                                <i class="fas fa-tree"></i>
+                                            </div>
+                                            <div class="fw-bold">随机森林</div>
+                                            <small class="text-muted">集成决策树</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="testSize" class="form-label">
+                                            测试集比例: <span class="slider-value" id="testSizeValue">0.3</span>
+                                        </label>
+                                        <input type="range" class="form-range parameter-slider" id="testSize" min="0.1" max="0.5" step="0.05" value="0.3">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="randomState" class="form-label">随机种子</label>
+                                        <input type="number" class="form-control" id="randomState" min="0" max="100" value="42">
+                                    </div>
+                                </div>
+                                
+                                <div id="rfOptions" class="mt-3" style="display: none;">
+                                    <label for="nEstimators" class="form-label">
+                                        决策树数量: <span class="slider-value" id="nEstimatorsValue">100</span>
+                                    </label>
+                                    <input type="range" class="form-range parameter-slider" id="nEstimators" min="10" max="200" step="10" value="100">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>10</span>
+                                        <span>100</span>
+                                        <span>200</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 执行按钮 -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button id="classifyBtn" class="btn btn-primary btn-lg">
+                                <i class="fas fa-spinner fa-spin loading-spinner" id="classifySpinner"></i>
+                                <span id="classifyBtnText"><i class="fas fa-play-circle me-2"></i>开始分类</span>
+                            </button>
+                            <button id="downloadBtn" class="btn btn-outline-success" disabled>
+                                <i class="fas fa-download me-2"></i>下载结果
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：结果显示区 -->
+            <div class="col-lg-8">
+                <!-- 原始数据预览卡片 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-image me-2"></i>原始数据预览</h5>
+                        <span class="status-badge bg-secondary" id="dataStatus">未加载</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="image-container mb-3">
+                            <div id="originalImagePlaceholder" class="image-placeholder">
+                                <div class="text-center">
+                                    <i class="fas fa-satellite fa-3x mb-3 text-muted"></i>
+                                    <p>加载数据集后显示图像</p>
+                                </div>
+                            </div>
+                            <img id="originalImage" class="result-image" style="display: none;" alt="原始数据">
+                        </div>
+                        <p class="small text-muted mb-0 text-center">Indian Pines数据集地面真实标签 (145×145像素, 16个类别)</p>
+                    </div>
+                </div>
+
+                <!-- 分类结果卡片 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>分类结果</h5>
+                        <span class="status-badge bg-warning" id="resultStatus">等待执行</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 结果图像 -->
+                        <div class="mb-4">
+                            <div class="image-container">
+                                <div id="resultImagePlaceholder" class="image-placeholder">
+                                    <div class="text-center">
+                                        <i class="fas fa-tasks fa-3x mb-3 text-muted"></i>
+                                        <p>分类结果将显示在这里</p>
+                                    </div>
+                                </div>
+                                <img id="resultImage" class="result-image" style="display: none;" alt="分类结果">
+                            </div>
+                        </div>
+                        
+                        <!-- 评估报告 -->
+                        <h6><i class="fas fa-file-alt me-2"></i>评估报告</h6>
+                        <div class="report-box p-3">
+                            <div id="reportContent">请加载数据集并执行分类以查看评估报告。</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 系统信息卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>系统信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>支持监督与非监督分类</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>4种分类算法可选</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>完整的模型评估</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Indian Pines数据集</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>可视化分类结果</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>当前配置</h6>
+                                <ul class="small list-unstyled">
+                                    <li><strong>分类类型:</strong> <span id="currentClassificationType">非监督分类</span></li>
+                                    <li><strong>算法:</strong> <span id="currentAlgorithm">K-Means</span></li>
+                                    <li><strong>参数:</strong> <span id="currentParameters">簇数: 10</span></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>数据集信息</h6>
+                                <ul class="small list-unstyled">
+                                    <li>Indian Pines 高光谱图像</li>
+                                    <li>145×145像素, 200个波段</li>
+                                    <li>16个土地覆盖类别</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>遥感图像分类系统</h5>
+                    <p>一个基于Web的遥感图像处理平台，支持监督和非监督分类算法，用于Indian Pines高光谱数据集的分类与分析。</p>
+                </div>
+                <div class="col-md-3" id="contact">
+                    <h5>联系信息</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i>2182979063@qq.com</li>
+                        <li><i class="fas fa-globe me-2"></i>https://github.com/BestMahoshojo</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>技术栈</h5>
+                    <ul class="list-unstyled">
+                        <li>Flask (后端)</li>
+                        <li>Bootstrap 5 (前端)</li>
+                        <li>Scikit-learn (机器学习)</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 遥感图像分类系统. 仅供学习和研究使用.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap & jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 自定义JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // 系统状态变量
+            let currentAlgorithm = 'kmeans';
+            let hasData = false;
+            let resultPath = '';
+            
+            // 初始化工具提示
+            $('[title]').tooltip({trigger: 'hover'});
+
+            // 初始化ISODATA参数显示
+            $('#minSamplesValue').text($('#minSamples').val());
+            $('#mergeThresholdValue').text($('#mergeThreshold').val());
+            $('#splitThresholdValue').text($('#splitThreshold').val());
+
+            // 滑块数值显示更新
+            $('#nClusters').on('input', function() {
+                $('#nClustersValue').text($(this).val());
+                updateCurrentParameters();
+            });
+            
+            $('#testSize').on('input', function() {
+                const value = $(this).val();
+                $('#testSizeValue').text(value);
+                updateCurrentParameters();
+            });
+            
+            $('#nEstimators').on('input', function() {
+                $('#nEstimatorsValue').text($(this).val());
+                updateCurrentParameters();
+            });
+            
+            $('#randomState').on('input', updateCurrentParameters);
+
+            // ISODATA滑块数值显示更新
+            $('#minSamples').on('input', function() {
+                $('#minSamplesValue').text($(this).val());
+                updateCurrentParameters();
+            });
+
+            $('#mergeThreshold').on('input', function() {
+                $('#mergeThresholdValue').text($(this).val());
+                updateCurrentParameters();
+            });
+
+            $('#splitThreshold').on('input', function() {
+                $('#splitThresholdValue').text($(this).val());
+                updateCurrentParameters();
+            });
+            
+            // 算法选项点击事件
+            $('.algorithm-option').click(function() {
+                $('.algorithm-option').removeClass('active');
+                $(this).addClass('active');
+                currentAlgorithm = $(this).data('algorithm');
+                
+                // 显示/隐藏RF参数（监督分类）
+                if (currentAlgorithm === 'rf') {
+                    $('#rfOptions').show();
+                } else {
+                    $('#rfOptions').hide();
+                }
+                
+                // 显示/隐藏ISODATA参数（非监督分类）
+                if (currentAlgorithm === 'isodata') {
+                    $('#isodataParams').show();
+                } else {
+                    $('#isodataParams').hide();
+                }
+                
+                updateCurrentAlgorithm();
+                updateCurrentParameters();
+            });
+            
+            // 分类类型切换
+            $('input[name="classification_type"]').change(function() {
+                const type = $(this).val();
+                
+                if (type === 'unsupervised') {
+                    $('#unsupervisedAlgorithms').show();
+                    $('#supervisedAlgorithms').hide();
+                    currentAlgorithm = 'kmeans';
+                    $('.algorithm-option').removeClass('active');
+                    $('[data-algorithm="kmeans"]').addClass('active');
+                    $('#rfOptions').hide();
+                    // 隐藏ISODATA参数（默认显示K-Means）
+                    $('#isodataParams').hide();
+                } else {
+                    $('#unsupervisedAlgorithms').hide();
+                    $('#supervisedAlgorithms').show();
+                    currentAlgorithm = 'svm';
+                    $('.algorithm-option').removeClass('active');
+                    $('[data-algorithm="svm"]').addClass('active');
+                    $('#rfOptions').hide();
+                    // 确保ISODATA参数在切换到监督分类时隐藏
+                    $('#isodataParams').hide();
+                }
+                
+                updateCurrentClassificationType();
+                updateCurrentAlgorithm();
+                updateCurrentParameters();
+            });
+            
+            // 更新当前配置显示
+            function updateCurrentClassificationType() {
+                const type = $('input[name="classification_type"]:checked').val();
+                $('#currentClassificationType').text(type === 'unsupervised' ? '非监督分类' : '监督分类');
+            }
+            
+            function updateCurrentAlgorithm() {
+                let algorithmName = '';
+                switch(currentAlgorithm) {
+                    case 'kmeans': algorithmName = 'K-Means'; break;
+                    case 'isodata': algorithmName = 'ISODATA'; break;
+                    case 'svm': algorithmName = 'SVM'; break;
+                    case 'rf': algorithmName = '随机森林'; break;
+                }
+                $('#currentAlgorithm').text(algorithmName);
+            }
+            
+            function updateCurrentParameters() {
+                let params = '';
+                const type = $('input[name="classification_type"]:checked').val();
+                
+                if (type === 'unsupervised') {
+                    if (currentAlgorithm === 'kmeans') {
+                        params = `簇数: ${$('#nClusters').val()}`;
+                    } else if (currentAlgorithm === 'isodata') {
+                        params = `簇数: ${$('#nClusters').val()}, 最小样本: ${$('#minSamples').val()}`;
+                    }
+                } else {
+                    if (currentAlgorithm === 'svm') {
+                        params = `测试集比例: ${$('#testSize').val()}, 随机种子: ${$('#randomState').val()}`;
+                    } else if (currentAlgorithm === 'rf') {
+                        params = `树数量: ${$('#nEstimators').val()}, 测试集比例: ${$('#testSize').val()}`;
+                    }
+                }
+                
+                $('#currentParameters').text(params);
+            }
+            
+            // 初始化配置显示
+            updateCurrentClassificationType();
+            updateCurrentAlgorithm();
+            updateCurrentParameters();
+            
+            // 加载数据集
+            $('#loadDatasetBtn').click(function() {
+                const btn = $(this);
+                const spinner = $('#datasetSpinner');
+                const btnText = $('#datasetBtnText');
+                
+                // 显示加载状态
+                spinner.show();
+                btnText.text('加载中...');
+                btn.prop('disabled', true);
+                
+                $.ajax({
+                    url: '/load_dataset',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            // 显示成功信息
+                            $('#datasetInfo').show();
+                            $('#datasetMessage').text(response.message);
+                            $('#datasetDetails').html(`数据形状: ${response.message.match(/数据形状: ([^,]+)/)?.[1] || 'N/A'}`);
+                            
+                            // 显示原始图像
+                            $('#originalImage').attr('src', response.preview_image).show();
+                            $('#originalImagePlaceholder').hide();
+                            
+                            // 更新状态
+                            hasData = true;
+                            $('#dataStatus').removeClass('bg-secondary').addClass('bg-success').text('已加载');
+                            $('#resultStatus').removeClass('bg-warning').addClass('bg-info').text('就绪');
+                            
+                            // 显示数据集统计
+                            $('#datasetStats').show();
+                            
+                            // 启用分类按钮
+                            $('#classifyBtn').prop('disabled', false);
+                            
+                            // 显示成功消息
+                            showToast('数据集加载成功', 'success');
+                        } else {
+                            showToast('加载失败: ' + response.message, 'danger');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        showToast('请求失败: ' + error, 'danger');
+                    },
+                    complete: function() {
+                        // 恢复按钮状态
+                        spinner.hide();
+                        btnText.html('<i class="fas fa-cloud-download-alt me-2"></i>重新加载数据集');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+            
+            // 执行分类
+            $('#classifyBtn').click(function() {
+                if (!hasData) {
+                    showToast('请先加载数据集！', 'warning');
+                    return;
+                }
+                
+                const btn = $(this);
+                const spinner = $('#classifySpinner');
+                const btnText = $('#classifyBtnText');
+                
+                // 显示加载状态
+                spinner.show();
+                btnText.text('处理中...');
+                btn.prop('disabled', true);
+                $('#resultStatus').removeClass('bg-info bg-success bg-danger').addClass('bg-warning').text('处理中...');
+                
+                // 收集表单数据
+                const formData = new FormData();
+                formData.append('classification_type', $('input[name="classification_type"]:checked').val());
+                formData.append('algorithm', currentAlgorithm);
+
+                if ($('input[name="classification_type"]:checked').val() === 'unsupervised') {
+                    formData.append('n_clusters', $('#nClusters').val());
+                    
+                    // 如果是ISODATA，收集额外的参数
+                    if (currentAlgorithm === 'isodata') {
+                        formData.append('min_samples', $('#minSamples').val());
+                        formData.append('merge_threshold', $('#mergeThreshold').val());
+                        formData.append('split_threshold', $('#splitThreshold').val());
+                    }
+                } else {
+                    formData.append('test_size', $('#testSize').val());
+                    formData.append('random_state', $('#randomState').val());
+                    if (currentAlgorithm === 'rf') {
+                        formData.append('n_estimators', $('#nEstimators').val());
+                    }
+                }
+
+                
+                // 发送请求
+                $.ajax({
+                    url: '/classify',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            // 显示结果图像
+                            $('#resultImage').attr('src', response.result_image).show();
+                            $('#resultImagePlaceholder').hide();
+                            
+                            // 显示评估报告
+                            $('#reportContent').text(response.report);
+                            
+                            // 更新结果路径和启用下载按钮
+                            resultPath = response.result_path;
+                            $('#downloadBtn').prop('disabled', false);
+                            
+                            // 更新状态
+                            $('#resultStatus').removeClass('bg-warning').addClass('bg-success').text('处理完成');
+                            
+                            
+                            showToast('分类完成！', 'success');
+                        } else {
+                            $('#resultStatus').removeClass('bg-warning').addClass('bg-danger').text('处理失败');
+                            showToast('分类失败: ' + response.message, 'danger');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#resultStatus').removeClass('bg-warning').addClass('bg-danger').text('请求失败');
+                        showToast('请求失败: ' + error, 'danger');
+                    },
+                    complete: function() {
+                        // 恢复按钮状态
+                        spinner.hide();
+                        btnText.html('<i class="fas fa-play-circle me-2"></i>开始分类');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+            
+            // 下载结果
+            $('#downloadBtn').click(function() {
+                if (resultPath) {
+                    window.open(resultPath, '_blank');
+                } else {
+                    showToast('没有可下载的结果文件', 'warning');
+                }
+            });
+            
+            // 显示Toast通知
+            function showToast(message, type = 'info') {
+                // 创建Toast元素
+                const toastId = 'toast-' + Date.now();
+                const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 position-fixed" style="bottom: 20px; right: 20px; z-index: 1050;">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+                `;
+                
+                // 添加到页面
+                $('body').append(toastHtml);
+                
+                // 显示Toast
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, {
+                    autohide: true,
+                    delay: 3000
+                });
+                toast.show();
+                
+                // 自动移除
+                toastElement.addEventListener('hidden.bs.toast', function () {
+                    $(this).remove();
+                });
+            }
+            
+            // 页面加载完成时显示欢迎消息
+            setTimeout(() => {
+                showToast('遥感图像分类系统已就绪，请加载数据集开始使用。', 'info');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
