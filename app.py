@@ -18,8 +18,7 @@ try:
     from utils.data_loader import load_indian_pines_data
     from utils.classifiers import (
         apply_kmeans, apply_isodata,
-        train_evaluate_svm, train_evaluate_rf,
-        save_model as save_model_to_disk
+        train_evaluate_svm, train_evaluate_rf
     )
 except ImportError as e:
     print(f"导入模块错误: {e}")

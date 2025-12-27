@@ -5,7 +5,6 @@ import warnings
 import os
 warnings.filterwarnings('ignore')
 
-# 设置matplotlib后端
 import matplotlib
 matplotlib.use('Agg')
 
@@ -21,11 +20,9 @@ def load_indian_pines_data(use_real_data=False):
     print("正在加载 Indian Pines 数据集...")
     
     if use_real_data:
-        # 尝试加载真实数据
         try:
             from scipy.io import loadmat
             
-            # 真实数据文件路径
             data_dir = 'data/Indian_pines'
             data_file = os.path.join(data_dir, 'Indian_pines_corrected.mat')
             label_file = os.path.join(data_dir, 'Indian_pines_gt.mat')
@@ -34,23 +31,19 @@ def load_indian_pines_data(use_real_data=False):
                 print("未找到真实数据文件，使用模拟数据")
                 return load_simulated_data()
             
-            # 加载真实数据
             data = loadmat(data_file)
             label_data = loadmat(label_file)
             
-            # 提取数据 - 不同版本的文件可能有不同的字段名
             if 'indian_pines_corrected' in data:
                 X_3d = data['indian_pines_corrected']
             elif 'indian_pines' in data:
                 X_3d = data['indian_pines']
             else:
-                # 尝试获取第一个非元数据的数组
                 for key in data.keys():
                     if not key.startswith('__') and data[key].ndim == 3:
                         X_3d = data[key]
                         break
             
-            # 提取标签
             if 'indian_pines_gt' in label_data:
                 y_2d = label_data['indian_pines_gt']
             elif 'gt' in label_data:
@@ -61,23 +54,16 @@ def load_indian_pines_data(use_real_data=False):
                         y_2d = label_data[key]
                         break
             
-            # 获取图像形状
             height, width, bands = X_3d.shape
             image_shape = (height, width)
             
-            # 重塑为二维数组（样本数 × 特征数）
             X = X_3d.reshape(-1, bands)
             y = y_2d.reshape(-1)
             
-            # 移除标签为0的背景像素（可选）
-            # mask = y != 0
-            # X = X[mask]
-            # y = y[mask]
             
             print(f"真实数据加载完成: X形状={X.shape}, y形状={y.shape}, 图像形状={image_shape}")
             print(f"类别标签: {np.unique(y)}")
             
-            # 数据标准化
             scaler = StandardScaler()
             X = scaler.fit_transform(X)
             
